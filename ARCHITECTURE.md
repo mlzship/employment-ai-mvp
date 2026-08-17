@@ -14,7 +14,8 @@ flowchart TB
     PR --> ONT[人才本体规范化插件]
     PR --> EXCEL[Excel数据源插件]
     PR --> RULE[规则评分插件]
-    PR --> RANK[语义排序插件]
+    PR --> LLM[大模型提供方插件]
+    PR --> RANK[规则召回与LLM复排插件]
     PR --> EXP[解释插件]
     PR --> REVIEW[人工审核插件]
     PR --> FEEDBACK[反馈指标插件]
@@ -24,6 +25,7 @@ flowchart TB
     EXCEL --> ONT
     RANK --> RULE
     RANK --> EXP
+    RANK --> LLM
     REVIEW --> RANK
     FEEDBACK --> REVIEW
     EXPORT --> FEEDBACK
@@ -40,6 +42,8 @@ flowchart TB
 内核不包含岗位规则、Excel字段、匹配算法、审核状态或报表逻辑；这些均由插件提供。
 
 本体不是数据库替代品。本版本以版本化 JSON-LD 保存概念和同义词，以 SQLite 保存人员/岗位快照、标准概念 ID、映射证据和业务过程状态。未来若需要多跳关系推理，可只替换本体存储/查询插件。
+
+大模型同样不是内核特权能力。`llm-provider` 以 `provider + model` 显式路由 OpenAI Chat Completions 兼容接口，`semantic-ranker` 只依赖 `llm.rerank` 能力键。替换模型供应商不需要改写规则、数据库或审核流程；密钥不进入插件状态、前端与业务数据库。
 
 ## 3. 生命周期
 

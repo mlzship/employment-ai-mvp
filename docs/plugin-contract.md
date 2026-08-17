@@ -23,7 +23,8 @@
 | ExcelSource | `data.source.excel` | `data.quality`, `semantic.normalize` |
 | RuleFilter | `match.rules` | — |
 | Explanation | `match.explain` | `match.rules` |
-| SemanticRanker | `match.rank` | `match.rules`, `match.explain` |
+| LlmProvider | `llm.rerank` | — |
+| SemanticRanker | `match.rank` | `match.rules`, `match.explain`, `llm.rerank` |
 | ReviewWorkflow | `review.workflow` | `match.rank` |
 | FeedbackMetrics | `feedback.metrics` | `review.workflow` |
 | MatchExport | `export.matches` | `feedback.metrics` |

@@ -2,10 +2,31 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.parse
 import urllib.request
+from http.cookiejar import CookieJar
 from typing import Any
 
 BASE_URL = os.getenv("MVP_BASE_URL", "http://127.0.0.1:18080")
+USERNAME = os.getenv("MVP_USERNAME", "")
+PASSWORD = os.getenv("MVP_PASSWORD", "")
+OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
+
+
+def login() -> None:
+    if not USERNAME and not PASSWORD:
+        return
+    if not USERNAME or not PASSWORD:
+        raise RuntimeError("MVP_USERNAME and MVP_PASSWORD must be provided together")
+    payload = urllib.parse.urlencode({"username": USERNAME, "password": PASSWORD}).encode()
+    request = urllib.request.Request(
+        BASE_URL + "/login",
+        data=payload,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    with OPENER.open(request, timeout=20) as response:
+        if response.geturl().rstrip("/") != BASE_URL.rstrip("/"):
+            raise RuntimeError("login did not reach the dashboard")
 
 
 def request_json(path: str, payload: dict[str, Any] | None = None) -> Any:
@@ -15,11 +36,12 @@ def request_json(path: str, payload: dict[str, Any] | None = None) -> Any:
         data=body,
         headers={"Content-Type": "application/json"} if body else {},
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
+    with OPENER.open(request, timeout=20) as response:
         return json.load(response)
 
 
 def main() -> None:
+    login()
     health = request_json("/healthz")
     batches = request_json("/api/batches")
     if not batches:
@@ -42,7 +64,7 @@ def main() -> None:
         {"match_id": first["match_id"], "outcome": "effective", "reason": "remote-smoke"},
     )
     metrics = request_json(f"/api/metrics?batch_id={batch_id}")
-    with urllib.request.urlopen(
+    with OPENER.open(
         f"{BASE_URL}/api/export?batch_id={batch_id}&job_id={job['job_id']}", timeout=20
     ) as response:
         exported = response.read()

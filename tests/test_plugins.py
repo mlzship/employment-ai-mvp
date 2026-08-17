@@ -35,7 +35,11 @@ def test_registry_resolves_ontology_before_excel(tmp_path: Path) -> None:
 
     assert order.index("data-quality") < order.index("semantic-ontology")
     assert order.index("semantic-ontology") < order.index("excel-source")
-    assert all(item["state"] == "enabled" for item in registry.status())
+    states = {item["id"]: item["state"] for item in registry.status()}
+    assert states["llm-provider"] == "degraded"
+    assert all(
+        state == "enabled" for plugin_id, state in states.items() if plugin_id != "llm-provider"
+    )
 
 
 def test_registry_blocks_disabling_plugin_with_dependents(tmp_path: Path) -> None:

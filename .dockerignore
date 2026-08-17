@@ -7,4 +7,11 @@ runtime
 *.docx
 *.pdf
 .env
-
+._*
+**/._*
+.DS_Store
+**/.DS_Store
+*.key
+*.pem
+github.github-token
+*登录.txt
