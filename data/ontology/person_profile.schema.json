@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/employment/person-profile-v1.schema.json",
+  "title": "TalentProfileSemanticAnnotationV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["person_id", "skills", "preferences", "model_version"],
+  "properties": {
+    "person_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{3,64}$"},
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_label", "concept_id", "confidence", "evidence_source"],
+        "properties": {
+          "source_label": {"type": "string"},
+          "concept_id": {"type": "string", "pattern": "^skill:"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "evidence_source": {"enum": ["excel", "resume", "interview", "human_review"]},
+          "observed_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regions": {"type": "array", "items": {"type": "string"}},
+        "industries": {"type": "array", "items": {"type": "string", "pattern": "^industry:"}},
+        "salary_min": {"type": "integer", "minimum": 0},
+        "salary_max": {"type": "integer", "minimum": 0},
+        "shift": {"type": "string"}
+      }
+    },
+    "model_version": {"type": "string"}
+  }
+}
+

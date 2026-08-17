@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">EMPLOYMENT AI · PLUGIN KERNEL</p>
+      <h1>{{ app_name }}</h1>
+    </div>
+    <div class="user-box">
+      <span>{{ user.username }} · {{ '审核人' if user.role == 'reviewer' else '业务操作员' }}</span>
+      <form method="post" action="/logout"><button class="ghost">退出</button></form>
+    </div>
+  </header>
+
+  <main class="workspace" data-role="{{ user.role }}">
+    <section class="flow-strip" aria-label="Golden Flow">
+      <span>Excel快照</span><b>→</b><span>质量门</span><b>→</b><span>本体规范化</span><b>→</b><span>Top10</span><b>→</b><span>人工审核</span><b>→</b><span>反馈闭环</span>
+    </section>
+
+    <div id="notice" class="alert hidden"></div>
+
+    <section class="metrics" id="metrics">
+      <article><small>匹配记录</small><strong id="metric-matches">0</strong></article>
+      <article><small>审核率</small><strong id="metric-review">0%</strong></article>
+      <article><small>反馈完整率</small><strong id="metric-feedback">0%</strong></article>
+      <article><small>人工接受率</small><strong id="metric-acceptance">0%</strong></article>
+    </section>
+
+    <section class="grid two">
+      <article class="panel">
+        <div class="panel-title"><div><p class="eyebrow">01 · DATA</p><h2>数据批次</h2></div><span class="tag">双 Sheet</span></div>
+        <form id="import-form" class="inline-form">
+          <input id="xlsx-file" type="file" accept=".xlsx" required>
+          <button class="secondary" type="submit">导入并校验</button>
+        </form>
+        <label>当前批次<select id="batch-select"></select></label>
+        <div id="batch-summary" class="subtle-card">正在读取批次…</div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-title"><div><p class="eyebrow">02 · MATCH</p><h2>岗位匹配</h2></div><span class="tag accent">人工可复核</span></div>
+        <label>有效岗位<select id="job-select"></select></label>
+        <div class="inline-form compact">
+          <label>候选数<input id="top-n" type="number" min="1" max="50" value="10"></label>
+          <button id="run-match" class="primary" type="button">生成 Top10</button>
+          <button id="export" class="ghost" type="button">导出 CSV</button>
+        </div>
+        <p class="hint">规则使用本体概念 ID；原始标签与映射证据始终保留。</p>
+      </article>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="panel-title"><div><p class="eyebrow">03 · REVIEW</p><h2>候选结果与解释</h2></div><span id="result-count" class="tag">0 人</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>排名</th><th>候选</th><th>总分</th><th>关键理由</th><th>冲突/提示</th><th>人工结论</th><th>业务反馈</th></tr></thead>
+          <tbody id="match-rows"><tr><td colspan="7" class="empty">选择批次和岗位后生成匹配结果</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><div><p class="eyebrow">04 · PLUGINS</p><h2>能力插件状态</h2></div><span class="tag">静态受审查</span></div>
+      <div id="plugin-list" class="plugin-list"></div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', path='/app.js') }}" defer></script>
+</body>
+</html>

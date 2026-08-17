@@ -1,0 +1,52 @@
+{
+  "@context": {
+    "label": "http://www.w3.org/2000/01/rdf-schema#label",
+    "aliases": "https://example.invalid/employment/aliases",
+    "requiresSkill": {"@id": "https://example.invalid/employment/requiresSkill", "@type": "@id"},
+    "industry": {"@id": "https://example.invalid/employment/industry", "@type": "@id"}
+  },
+  "ontology_id": "employment-ai-core",
+  "version": "1.0.0",
+  "@graph": [
+    {"@id": "industry:equipment", "@type": "Industry", "label": "装备制造", "aliases": ["机械制造", "设备制造"]},
+    {"@id": "industry:electronics", "@type": "Industry", "label": "电子制造", "aliases": ["电子信息制造", "电子装配"]},
+    {"@id": "industry:logistics", "@type": "Industry", "label": "仓储物流", "aliases": ["物流仓储", "物流"]},
+    {"@id": "industry:service", "@type": "Industry", "label": "现代服务", "aliases": ["客户服务", "商贸服务"]},
+    {"@id": "industry:chemical", "@type": "Industry", "label": "化工新材料", "aliases": ["化工", "新材料"]},
+
+    {"@id": "skill:cnc_operation", "@type": "Skill", "label": "数控操作", "aliases": ["CNC操作", "数控机床操作", "数控车床", "加工中心操作"]},
+    {"@id": "skill:cnc_programming", "@type": "Skill", "label": "数控编程", "aliases": ["CNC编程", "加工中心编程"]},
+    {"@id": "skill:drawing_reading", "@type": "Skill", "label": "机械识图", "aliases": ["看图纸", "工程图识读"]},
+    {"@id": "skill:welding", "@type": "Skill", "label": "焊接", "aliases": ["电焊", "气保焊", "氩弧焊"]},
+    {"@id": "skill:equipment_maintenance", "@type": "Skill", "label": "设备维修", "aliases": ["机修", "设备检修", "机械维修"]},
+    {"@id": "skill:electrical_maintenance", "@type": "Skill", "label": "电气维修", "aliases": ["电工维修", "电气检修", "维修电工"]},
+    {"@id": "skill:plc", "@type": "Skill", "label": "PLC", "aliases": ["PLC编程", "可编程控制器"]},
+    {"@id": "skill:warehouse", "@type": "Skill", "label": "仓库管理", "aliases": ["仓储管理", "库存管理"]},
+    {"@id": "skill:forklift", "@type": "Skill", "label": "叉车操作", "aliases": ["叉车", "叉车驾驶"]},
+    {"@id": "skill:quality_inspection", "@type": "Skill", "label": "质量检验", "aliases": ["质检", "质量检测", "来料检验"]},
+    {"@id": "skill:measuring_tools", "@type": "Skill", "label": "量具使用", "aliases": ["卡尺", "千分尺", "测量工具"]},
+    {"@id": "skill:assembly", "@type": "Skill", "label": "产品装配", "aliases": ["装配", "组装", "生产装配"]},
+    {"@id": "skill:soldering", "@type": "Skill", "label": "电子焊接", "aliases": ["烙铁焊接", "锡焊"]},
+    {"@id": "skill:customer_service", "@type": "Skill", "label": "客户服务", "aliases": ["客服", "电话客服", "在线客服"]},
+    {"@id": "skill:office_software", "@type": "Skill", "label": "办公软件", "aliases": ["Office", "Excel", "表格处理"]},
+    {"@id": "skill:data_entry", "@type": "Skill", "label": "数据录入", "aliases": ["信息录入", "文员录入"]},
+    {"@id": "skill:automation", "@type": "Skill", "label": "工业自动化", "aliases": ["自动化控制", "产线自动化"]},
+    {"@id": "skill:chemical_operation", "@type": "Skill", "label": "化工操作", "aliases": ["化工生产操作", "反应釜操作"]},
+    {"@id": "skill:safety_production", "@type": "Skill", "label": "安全生产", "aliases": ["生产安全", "安全操作规程"]},
+    {"@id": "skill:packaging", "@type": "Skill", "label": "包装作业", "aliases": ["产品包装", "包装工"]},
+
+    {"@id": "occupation:cnc_operator", "@type": "Occupation", "label": "数控操作员", "aliases": ["CNC操作员", "加工中心操作工"], "industry": "industry:equipment", "requiresSkill": ["skill:cnc_operation", "skill:drawing_reading"]},
+    {"@id": "occupation:welder", "@type": "Occupation", "label": "焊工", "aliases": ["电焊工", "焊接工"], "industry": "industry:equipment", "requiresSkill": ["skill:welding", "skill:safety_production"]},
+    {"@id": "occupation:maintenance_technician", "@type": "Occupation", "label": "设备维修工", "aliases": ["机修工", "设备检修员"], "industry": "industry:equipment", "requiresSkill": ["skill:equipment_maintenance", "skill:electrical_maintenance"]},
+    {"@id": "occupation:electrician", "@type": "Occupation", "label": "维修电工", "aliases": ["电工", "电气维修工"], "industry": "industry:equipment", "requiresSkill": ["skill:electrical_maintenance", "skill:plc"]},
+    {"@id": "occupation:warehouse_keeper", "@type": "Occupation", "label": "仓库管理员", "aliases": ["仓管员", "库管员"], "industry": "industry:logistics", "requiresSkill": ["skill:warehouse", "skill:office_software"]},
+    {"@id": "occupation:forklift_driver", "@type": "Occupation", "label": "叉车司机", "aliases": ["叉车工", "叉车驾驶员"], "industry": "industry:logistics", "requiresSkill": ["skill:forklift", "skill:safety_production"]},
+    {"@id": "occupation:quality_inspector", "@type": "Occupation", "label": "质量检验员", "aliases": ["质检员", "质量检测员"], "industry": "industry:equipment", "requiresSkill": ["skill:quality_inspection", "skill:measuring_tools"]},
+    {"@id": "occupation:assembler", "@type": "Occupation", "label": "装配工", "aliases": ["组装工", "生产装配员"], "industry": "industry:electronics", "requiresSkill": ["skill:assembly", "skill:soldering"]},
+    {"@id": "occupation:customer_service", "@type": "Occupation", "label": "客服专员", "aliases": ["客服代表", "在线客服"], "industry": "industry:service", "requiresSkill": ["skill:customer_service", "skill:office_software"]},
+    {"@id": "occupation:data_clerk", "@type": "Occupation", "label": "数据文员", "aliases": ["录入文员", "数据录入员"], "industry": "industry:service", "requiresSkill": ["skill:data_entry", "skill:office_software"]},
+    {"@id": "occupation:automation_technician", "@type": "Occupation", "label": "自动化技术员", "aliases": ["电气自动化技术员", "自动化工程助理"], "industry": "industry:electronics", "requiresSkill": ["skill:automation", "skill:plc"]},
+    {"@id": "occupation:chemical_operator", "@type": "Occupation", "label": "化工操作工", "aliases": ["化工生产操作员", "反应操作工"], "industry": "industry:chemical", "requiresSkill": ["skill:chemical_operation", "skill:safety_production"]}
+  ]
+}
+

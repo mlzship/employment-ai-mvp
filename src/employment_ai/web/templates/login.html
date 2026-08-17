@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <div class="brand-mark">赣</div>
+    <p class="eyebrow">GOLDEN FLOW · MVP</p>
+    <h1>{{ app_name }}</h1>
+    <p class="muted">仅使用虚构数据。AI提供候选排序与解释，最终决策由人工完成。</p>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login" class="stack">
+      <label>账号<input name="username" autocomplete="username" required></label>
+      <label>密码<input type="password" name="password" autocomplete="current-password" required></label>
+      <button type="submit" class="primary">进入工作台</button>
+    </form>
+    <p class="hint">本地演示账号：operator / reviewer。部署时必须更换默认密码。</p>
+  </main>
+</body>
+</html>

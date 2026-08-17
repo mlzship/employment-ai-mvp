@@ -1,0 +1,33 @@
+name: employment-ai-mvp
+
+services:
+  employment-ai:
+    build:
+      context: .
+    image: employment-ai-mvp:local
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${APP_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-demo-secret-before-production}
+      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:-operator-demo}
+      REVIEWER_PASSWORD: ${REVIEWER_PASSWORD:-reviewer-demo}
+      AUTO_SEED: ${AUTO_SEED:-true}
+      AUTH_DISABLED: ${AUTH_DISABLED:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      DATABASE_PATH: /app/runtime/employment_ai.db
+      SEED_XLSX: /app/data/synthetic/employment_ai_demo.xlsx
+      ONTOLOGY_PATH: /app/data/ontology/employment_ontology.json
+      DISABLED_PLUGINS: ${DISABLED_PLUGINS:-}
+    volumes:
+      - employment_ai_runtime:/app/runtime
+    restart: unless-stopped
+
+volumes:
+  employment_ai_runtime:
