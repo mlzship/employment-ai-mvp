@@ -28,3 +28,15 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import json,urllib.request; r=urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3); assert json.load(r)['status']=='ok'"
 
 CMD ["sh", "-c", "uvicorn employment_ai.main:app --host ${APP_HOST} --port ${APP_PORT}"]
+
+FROM runtime AS test
+
+USER root
+COPY tests ./tests
+COPY scripts ./scripts
+RUN python -m pip install '.[dev]'
+USER app
+
+CMD ["pytest", "-q"]
+
+FROM runtime AS production

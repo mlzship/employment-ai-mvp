@@ -3,22 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>登录 · {{ app_name }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body class="login-body">
-  <main class="login-card">
-    <div class="brand-mark">赣</div>
-    <p class="eyebrow">GOLDEN FLOW · MVP</p>
-    <h1>{{ app_name }}</h1>
-    <p class="muted">仅使用虚构数据。AI提供候选排序与解释，最终决策由人工完成。</p>
-    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
-    <form method="post" action="/login" class="stack">
-      <label>账号<input name="username" autocomplete="username" required></label>
-      <label>密码<input type="password" name="password" autocomplete="current-password" required></label>
-      <button type="submit" class="primary">进入工作台</button>
-    </form>
-    <p class="hint">本地演示账号：operator / reviewer。部署时必须更换默认密码。</p>
+  <main class="auth-shell">
+    <section class="auth-brand" aria-label="产品介绍">
+      <div>
+        <div class="auth-logo"><span>赣</span><strong>人才服务 AI 工作台</strong></div>
+        <p class="eyebrow light">EMPLOYMENT INTELLIGENCE</p>
+        <h1>让每一次人岗推荐<br>都有依据、可复核。</h1>
+        <p class="auth-description">规则守住业务边界，本体统一人才语义，大模型识别可迁移能力，人工完成最终决策。</p>
+      </div>
+      <ol class="auth-points">
+        <li><span>01</span><div><strong>证据可追溯</strong><small>保留原始字段、本体映射和模型版本</small></div></li>
+        <li><span>02</span><div><strong>结果可解释</strong><small>同时呈现匹配理由、冲突和核验问题</small></div></li>
+        <li><span>03</span><div><strong>决策有人管</strong><small>审核、反馈、导出均纳入权限与审计</small></div></li>
+      </ol>
+      <p class="auth-disclaimer">当前环境仅使用虚构测试数据</p>
+    </section>
+
+    <section class="auth-form-panel">
+      <div class="login-card">
+        <div class="mobile-logo"><span>赣</span><strong>人才服务 AI 工作台</strong></div>
+        <p class="eyebrow">SECURE SIGN IN</p>
+        <h2>欢迎回来</h2>
+        <p class="login-subtitle">请使用由部署管理员分配的账号进入工作台。</p>
+        {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+        <form method="post" action="/login" class="login-form">
+          <label for="username">账号</label>
+          <input id="username" name="username" autocomplete="username" placeholder="请输入账号" required autofocus>
+          <label for="password">密码</label>
+          <input id="password" type="password" name="password" autocomplete="current-password" placeholder="请输入密码" required>
+          <button type="submit" class="button primary login-button">进入工作台</button>
+        </form>
+        <div class="login-help"><span class="lock-dot" aria-hidden="true"></span>账号角色：业务操作员 / 复核人员</div>
+      </div>
+    </section>
   </main>
 </body>
 </html>

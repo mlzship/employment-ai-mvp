@@ -25,6 +25,15 @@ services:
       SEED_XLSX: /app/data/synthetic/employment_ai_demo.xlsx
       ONTOLOGY_PATH: /app/data/ontology/employment_ontology.json
       DISABLED_PLUGINS: ${DISABLED_PLUGINS:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-flash}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-45}
+      LLM_CANDIDATE_LIMIT: ${LLM_CANDIDATE_LIMIT:-20}
+      LLM_WEIGHT: ${LLM_WEIGHT:-0.4}
+      LLM_REQUIRED: ${LLM_REQUIRED:-false}
+      LLM_THINKING: ${LLM_THINKING:-false}
     volumes:
       - employment_ai_runtime:/app/runtime
     restart: unless-stopped

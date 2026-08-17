@@ -65,6 +65,11 @@ def health(request: Request) -> dict[str, Any]:
     }
 
 
+@router.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return Response(status_code=204)
+
+
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request) -> HTMLResponse:
     if request.session.get("user"):
@@ -123,6 +128,15 @@ def dashboard(request: Request) -> HTMLResponse:
 def list_plugins(request: Request) -> list[dict[str, Any]]:
     _user(request)
     return request.app.state.registry.status()
+
+
+@router.get("/api/llm/status")
+def llm_status(request: Request) -> dict[str, Any]:
+    _user(request)
+    try:
+        return _context(request).services.get("llm.rerank").status()
+    except KeyError as exc:
+        raise HTTPException(status_code=503, detail="大模型提供方插件未启用") from exc
 
 
 @router.post("/api/plugins/{plugin_id}/enable")

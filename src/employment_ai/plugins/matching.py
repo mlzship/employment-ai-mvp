@@ -13,10 +13,16 @@ except ImportError:  # pragma: no cover - deterministic fallback for constrained
 from employment_ai.core.context import AppContext
 from employment_ai.core.contracts import Plugin, PluginManifest
 from employment_ai.plugins.data_quality import EDUCATION_LEVELS
+from employment_ai.plugins.llm_provider import (
+    CandidateSemanticAssessment,
+    LlmProviderError,
+    OpenAICompatibleLlmService,
+)
 
 EDUCATION_SCORE = {name: index for index, name in enumerate(EDUCATION_LEVELS)}
 ELIGIBLE_STATUSES = {"求职中", "失业", "灵活就业"}
-MODEL_VERSION = "hybrid-rule-semantic-v1.0"
+BASELINE_MODEL_VERSION = "hybrid-rule-local-v1.1"
+LLM_MODEL_VERSION = "hybrid-rule-llm-v2.0"
 
 
 class RuleFilterService:
@@ -117,19 +123,50 @@ class ExplanationService:
         "行业偏好": "行业偏好相符",
     }
 
-    def build(self, evaluation: dict[str, Any], semantic_score: float) -> dict[str, Any]:
-        positives = [
+    def build(
+        self,
+        evaluation: dict[str, Any],
+        semantic_score: float,
+        local_semantic_score: float,
+        llm_assessment: CandidateSemanticAssessment | None = None,
+        provider: str = "",
+        model: str = "",
+    ) -> dict[str, Any]:
+        rule_positives = [
             self.LABELS[key] for key, value in evaluation["factors"].items() if value >= 0.75
         ]
-        if semantic_score >= 70:
-            positives.append("技能与岗位描述语义接近")
+        if llm_assessment:
+            positives = list(llm_assessment.positives) + rule_positives
+            conflicts = list(evaluation["conflicts"]) + list(llm_assessment.risks)
+            summary = llm_assessment.summary
+            review_questions = list(llm_assessment.review_questions)
+        else:
+            positives = rule_positives
+            conflicts = list(evaluation["conflicts"])
+            summary = "当前未配置大模型，结果仅使用规则与本地文本相似度基线。"
+            review_questions = []
+            if semantic_score >= 70:
+                positives.append("技能与岗位文本相似度较高")
+        positives = list(dict.fromkeys(positives))
+        conflicts = list(dict.fromkeys(conflicts))
         return {
             "positives": positives[:4],
-            "conflicts": evaluation["conflicts"][:4],
+            "conflicts": conflicts[:4],
             "factor_scores": {
                 key: round(value * 100, 1) for key, value in evaluation["factors"].items()
             },
-            "human_review_required": bool(evaluation["conflicts"]) or semantic_score < 55,
+            "summary": summary,
+            "review_questions": review_questions[:3],
+            "human_review_required": bool(conflicts)
+            or bool(review_questions)
+            or semantic_score < 55,
+            "provenance": {
+                "llm_used": bool(llm_assessment),
+                "provider": provider if llm_assessment else None,
+                "model": model if llm_assessment else None,
+                "semantic_score": semantic_score,
+                "local_similarity": local_semantic_score,
+            },
         }
 
 
@@ -153,42 +190,112 @@ class SemanticRankerService:
             raise ValueError("岗位不存在或批次无效")
         rules: RuleFilterService = self.context.services.get("match.rules")
         explainer: ExplanationService = self.context.services.get("match.explain")
+        llm: OpenAICompatibleLlmService = self.context.services.get("llm.rerank")
         candidates: list[dict[str, Any]] = []
         for person in self.context.db.get_people(batch_id):
             evaluation = rules.evaluate(job, person)
             if not evaluation["eligible"]:
                 continue
-            semantic_score = self._semantic(job, person)
-            final_score = 0.75 * evaluation["rule_score"] + 0.25 * semantic_score
+            local_semantic_score = self._semantic(job, person)
             candidates.append(
+                {
+                    "person": person,
+                    "evaluation": evaluation,
+                    "local_semantic_score": local_semantic_score,
+                    "baseline_score": round(
+                        0.75 * evaluation["rule_score"] + 0.25 * local_semantic_score,
+                        2,
+                    ),
+                }
+            )
+        candidates.sort(key=lambda item: (-item["baseline_score"], item["person"]["person_id"]))
+        target_count = max(1, min(top_n, 50))
+        shortlist_count = min(
+            len(candidates),
+            max(target_count, self.context.settings.llm_candidate_limit),
+        )
+        shortlist = candidates[:shortlist_count]
+
+        if self.context.settings.llm_required and not llm.configured:
+            raise ValueError("大模型被设为必需，但 LLM_API_KEY 尚未配置")
+        llm_result = None
+        if llm.configured and shortlist:
+            try:
+                llm_result = llm.rerank(job, shortlist)
+            except LlmProviderError as exc:
+                raise ValueError(str(exc)) from exc
+
+        ranked: list[dict[str, Any]] = []
+        for candidate in shortlist:
+            person = candidate["person"]
+            evaluation = candidate["evaluation"]
+            assessment = (
+                llm_result.assessments[person["person_id"]] if llm_result is not None else None
+            )
+            semantic_score = (
+                assessment.score if assessment is not None else candidate["local_semantic_score"]
+            )
+            if assessment is not None:
+                final_score = (1 - self.context.settings.llm_weight) * evaluation[
+                    "rule_score"
+                ] + self.context.settings.llm_weight * semantic_score
+                model_version = (
+                    f"{LLM_MODEL_VERSION}:{self.context.settings.llm_provider}/"
+                    f"{self.context.settings.llm_model}"
+                )
+            else:
+                final_score = candidate["baseline_score"]
+                model_version = BASELINE_MODEL_VERSION
+            ranked.append(
                 {
                     "match_id": str(uuid.uuid4()),
                     "person_id": person["person_id"],
                     "score": round(final_score, 2),
                     "rule_score": evaluation["rule_score"],
                     "semantic_score": semantic_score,
-                    "explanation": explainer.build(evaluation, semantic_score),
-                    "model_version": MODEL_VERSION,
+                    "explanation": explainer.build(
+                        evaluation,
+                        semantic_score,
+                        candidate["local_semantic_score"],
+                        llm_assessment=assessment,
+                        provider=self.context.settings.llm_provider,
+                        model=self.context.settings.llm_model,
+                    ),
+                    "model_version": model_version,
                 }
             )
-        candidates.sort(key=lambda item: (-item["score"], item["person_id"]))
-        selected = candidates[: max(1, min(top_n, 50))]
+
+        ranked.sort(key=lambda item: (-item["score"], item["person_id"]))
+        selected = ranked[:target_count]
         for index, item in enumerate(selected, start=1):
             item["rank"] = index
         self.context.db.save_matches(batch_id, job_id, selected)
         self.context.events.publish(
             "match.ranked",
-            {"batch_id": batch_id, "job_id": job_id, "count": len(selected)},
-        )
-        self.context.audit(
-            "match.ranked",
-            actor,
             {
                 "batch_id": batch_id,
                 "job_id": job_id,
-                "top_n": len(selected),
-                "model_version": MODEL_VERSION,
+                "count": len(selected),
+                "llm_used": llm_result is not None,
             },
+        )
+        audit_details: dict[str, object] = {
+            "batch_id": batch_id,
+            "job_id": job_id,
+            "top_n": len(selected),
+            "shortlist_count": shortlist_count,
+            "llm_used": llm_result is not None,
+            "provider": self.context.settings.llm_provider,
+            "model": self.context.settings.llm_model,
+            "model_version": selected[0]["model_version"] if selected else BASELINE_MODEL_VERSION,
+        }
+        if llm_result is not None:
+            audit_details["llm_response_id"] = llm_result.response_id
+            audit_details["llm_usage"] = llm_result.usage
+        self.context.audit(
+            "match.ranked",
+            actor,
+            audit_details,
         )
         return self.context.db.list_matches(batch_id, job_id)
 
@@ -227,12 +334,12 @@ class ExplanationPlugin(Plugin):
 class SemanticRankerPlugin(Plugin):
     manifest = PluginManifest(
         id="semantic-ranker",
-        version="1.0.0",
-        name="规则+语义排序",
-        description="使用规则基线与本地轻量语义相似度生成Top-N，不调用外部模型",
+        version="2.0.0",
+        name="规则召回 + LLM复排",
+        description="规则先形成可审计候选池，再由可配置大模型做语义复排与解释",
         provides=("match.rank",),
-        requires=("match.rules", "match.explain"),
-        permissions=("snapshot:read", "match:write"),
+        requires=("match.rules", "match.explain", "llm.rerank"),
+        permissions=("snapshot:read", "match:write", "llm:invoke"),
         events_out=("match.ranked",),
         cleanup_strategy=(
             "remove rank service; soft-retire prior results only when a new run is saved"

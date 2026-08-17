@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "employment-ai-mvp"
-version = "0.1.0"
+version = "0.2.0"
 description = "A minimal plugin-oriented employment matching workbench"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,11 +16,11 @@ dependencies = [
   "openpyxl>=3.1,<4",
   "rapidfuzz>=3.12,<4",
   "itsdangerous>=2.2,<3",
+  "httpx>=0.28,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "httpx>=0.28,<1",
   "pytest>=8,<9",
   "pytest-cov>=6,<7",
   "ruff>=0.11,<1",
@@ -45,4 +45,3 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
-
